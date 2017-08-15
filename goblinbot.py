@@ -7,30 +7,61 @@ class goblinbot:
         part = command.split(" ")
         if part[0] == "!subname":
             if len(part)<3:
-                self.send("Not enough arguments. Please enter !getname game(AW,NMS,DD) yoursuggestion")
-                return
-            if part[1].upper() not in ['AW','NMS','DD']:
-                self.send("Name list invalid. Please enter !subname game(AW,NMS,DD) yoursuggestion")
-                return
+                return "Not enough arguments. Please enter !getname game("+(', '.join(self.namelists))+") yoursuggestion"
 
+            if part[1].upper() not in self.namelists:
+                return "Name list invalid. Please enter !subname game("+(', '.join(self.namelists))+") yoursuggestion"
             if part[1].upper() not in self.names:
                 self.names[part[1].upper()] = []
-            self.names[part[1].upper()].append(part[2])
-            self.send("Your name "+part[2]+" has been submitted to the "+part[1]+" namelist.")
-        if part[0] == "!getname":
+            self.names[part[1].upper()].append(" ".join(part[2:]))
+            return "Your name "+part[2]+" has been submitted to the "+part[1]+" namelist."
+
+        if part[0] == "!listnames":
             if len(part)<2:
-                self.send("Not enough arguments. Please enter !getname game(AW,NMS,DD)")
-                return
-            if part[1].upper() not in ['AW','NMS','DD']:
-                self.send("Name list invalid. Please enter !getname game(AW,NMS,DD)")
-                return
+                return "Not enough arguments. Please enter !getname game("+(', '.join(self.namelists))+")"
+            if part[1].upper() not in self.namelists:
+                return "Name list invalid. Please enter !getname game("+(', '.join(self.namelists))+")"
             if part[1].upper() not in self.names or len(self.names[part[1].upper()])<1:
-                self.send("No names for that list")
-                return
+                return "No names for that list"
             self.send(', '.join(self.names[part[1].upper()])+"\r\n")
+
+        if part[0] == "!randomname":
+            if len(part)<2:
+                return "Not enough arguments. Please enter !getname game("+(', '.join(self.namelists))+")"
+            if part[1].upper() not in self.namelists:
+                return "Name list invalid. Please enter !getname game("+(', '.join(self.namelists))+")"
+            if part[1].upper() not in self.names or len(self.names[part[1].upper()])<1:
+                return "No names for that list"
+            self.send(random.choice(self.names[part[1].upper()])+"\r\n"))
 
         pickle.dump(self.names, open("pickles/names.pickle", "wb"))
 
+        if part[0] == "!roll":
+            if len(part) < 2:
+                return "Not enough arguments. Please enter !roll rollcode(1d6, 2d4+1, etc)"
+            for part in part[1:]:
+                match = re.match("([0-9]+)[Dd]([0-9]+)([+\-][0-9]+)?")
+                if not match:
+                    return "rollcode must be in the format 1d1+1"
+                else:
+                    total = 0
+                    output = []
+                    for i in range(int(match.group(1))):
+                        roll = random.randint(1,int(match.group(2))+1)
+                        output.append(str(roll))
+                        total += roll
+                    if match.group(3) is not None:
+                        if match.group(3)[0] == "+":
+                            output.append(match.group(3))
+                            total += int(match.group(3)[1:])
+                        if match.group(3)[0] == "-":
+                            output.append(match.group(3))
+                            total -= int(match.group(3)[1:])
+                    return (", ".join(output))+" = "+str(total)
+
+        #This just returns whatever is listed against the command in the json
+        if part[0] in self.commands:
+            return self.commands[part[0]]
 
 
     def send(self,message):
@@ -43,6 +74,9 @@ class goblinbot:
         self.name = creds['name']
         self.password = creds['oauth']
         self.channel = creds['channel']
+
+        self.namelists = creds['namelists']
+        self.commands = creds['commands']
 
         try:
             self.names = pickle.load(open("pickles/names.pickle", "rb"))
@@ -91,32 +125,15 @@ class goblinbot:
                                 w = breakup[2]
                             elif breakup[1] != "":
                                 w = "twitchpm"
-                            if re.search('who.*?daft', breakup[3]):
-                                self.daft.say("I am daft",w,"twitch")
-                            if re.search('[Nn]ick[nN]ame', breakup[3]):
-                                self.daft.say("identify socks","Nickserv","twitch")
-                                print "identifying"
 
                             namesplit = [self.name[0:i].lower() for i in range(3, len(self.name) + 1)]
-                            bwo = re.sub('^<.*?> ',"",breakup[3].lstrip())
-                            bridgename = re.match('^<(.*?)> ',breakup[3].lstrip())
-                            if bridgename != None:
-                                if 'players' in self.daft.modules.keys():
-                                    self.daft.modules['players'].logon(bridgename.group(1),breakup[1])
-                                print "sender is now "+bridgename.group(1)
-                                w = breakup[1]+w
-                                sender = bridgename.group(1)
-                            else:
-                                sender = breakup[1]
-                            if re.match('^[\.]+\r\n?$', breakup[3]):
-                                self.daft.boom("AWKWARD",sender,w)
-                            if re.match('^[Bb]otsnack\r\n?$', breakup[3]):
-                                self.daft.boom("botsnack",sender,w)
+                            bwo = breakup[3].lstrip()
+
+                            sender = breakup[1]
+
                             breakupsplit = re.split("(, |: )",bwo,1)
                             bettersplit = re.match("^([^ ]+) ?(, |: )(.+)$",bwo)
-                            ct = int(0.6+((time.time() - pingeth)/talklevel))
-                            if ct < 1:
-                                ct = 1
+
                             words = "".join(breakupsplit)
                             if breakupsplit[0].strip().lower() in namesplit:
                                 words = "".join(breakupsplit[2:])
@@ -126,8 +143,10 @@ class goblinbot:
                             if breakupsplit[-1].strip().lower() in namesplit:
                                 words = "".join(breakupsplit[:-2])
 
+                            #Here's where we actually send the command off to be processed
                             if words[0]=="!":
-                                self.processCommand(sender,words)
+                                self.send(self.processCommand(sender,words))
+
                         if line.find("hostname") != -1:
                             self.irc.send ( 'JOIN '+self.channel+'\r\n'.encode("utf-8"))
                         if line.find("his nickname is registered") != -1:
