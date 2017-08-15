@@ -59,6 +59,33 @@ class goblinbot:
                             total -= int(match.group(3)[1:])
                     return (", ".join(output))+" = "+str(total)
 
+	if part[0] == "!vote":
+		if len(part) < 3:
+			return "Not enough arguments. Please enter !vote pollname option"
+		if part[1].lower() not in self.polls:
+			return "There is no poll called "+part[1]
+		#allow for either vote options that are from a specified list or freeform
+		if self.polls[part[1].lower()] != "*" and part[2].lower() not in self.polls[part[1].lower()]:
+			return "The poll "+part[1]+" does not allow the option "+part[2]+". Options are:"+(", ".join(self.polls[part[1].lower()]))
+		#build the structure if it's not already there
+		if part[1].lower() not in self.votes:
+			self.votes[part[1].lower()] = {}
+		if part[2].lower() not in self.votes[part[1].lower()]:
+			self.votes[part[1].lower()][part[2].lower()] = []
+		#remove their vote from any existing options
+		for option in self.votes[part[1].lower()]:
+			option.remove(sender)
+		#put their vote in their new choice
+		self.votes[part[1].lower()][part[2].lower()].append(sender)
+
+	if part[0] == "!results":
+		output = []
+		if part[1].lower() not in self.votes:
+                        self.votes[part[1].lower()] = {}
+		for option in self.votes[part[1].lower()].keys():
+                        output.append(option+": "+str(len(self.votes[part[1].lower()][option])))
+		return "\r\n".join(output)
+
         #This just returns whatever is listed against the command in the json
         if part[0] in self.commands:
             return self.commands[part[0]]
@@ -66,7 +93,7 @@ class goblinbot:
 
     def send(self,message):
         self.irc.send(('PRIVMSG '+self.channel+' : '+message+" \r\n").encode("utf-8"))
-    
+
     def main(self):
         self.waitinglist = []
         json_data=open("credentials.json").read()
@@ -77,7 +104,8 @@ class goblinbot:
 
         self.namelists = creds['namelists']
         self.commands = creds['commands']
-
+        self.polls = creds['polls']
+	self.votes = {}
         try:
             self.names = pickle.load(open("pickles/names.pickle", "rb"))
         except (OSError, IOError) as e:
