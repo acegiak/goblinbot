@@ -120,7 +120,7 @@ class goblinbot:
             if not hasattr(self,'votes'):
                 return "No votes have been submitted"
             if len(part) <2:
-                return "Not enough arguments. Please enter !results pollname"
+                return "Not enough arguments. Please enter !results pollname. available polls:"+(", ".join(self.polls))
             if part[1].lower() not in self.polls:
                 return part[1].lower()+" is not a current poll"
             if part[1].lower() not in self.votes:
