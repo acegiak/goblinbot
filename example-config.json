@@ -1,0 +1,19 @@
+{
+    "channel":"#acegiak",
+    "oauth":"YOUR OAUTH TOKEN",
+    "name":"g0blinb0t",
+    "namelists":["AW","DD","NMS"],
+    "permissions":{
+        "global":["!vote","!results"],
+        "moderator":["!emily","!ashton"],
+        "subscriber":["!ashton"]
+    },
+    "customcommands":{
+        "!emily":"Emily is an artist and filmmaker. Her website is blackwoolholiday.com, her twitter is @blackwoolsays, and her tumblr is blackwoolholiday",
+        "!ashton":"Ashton is a game designer, developer and streamer. You can find her under the name Acegiak on twitch, twitter, tumblr, youtube, instagram, and at her website: acegiak.net"
+    },
+    "polls":{
+        "free":"*",
+        "chorus":["fire","water","earth","air","self"]
+    }
+}
