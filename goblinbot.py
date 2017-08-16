@@ -26,8 +26,9 @@ class goblinbot:
         if part[0] == "!help":
             available = ["!help","!roll","!vote","!results","!subname","!listnames","!randomname"]
             if hasattr(self,'commands'):
-                for command in self.commands.keys:
+                for command in self.commands.keys():
                     available.append(command)
+                return "Available commands: "+(" ".join(available))
 
         if part[0] == "!subname":
             if not hasattr(self,'namelists'):
