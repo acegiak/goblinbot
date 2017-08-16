@@ -4,7 +4,7 @@
     "name":"g0blinb0t",
     "namelists":["AW","DD","NMS"],
     "permissions":{
-        "global":["!vote","!results"],
+        "global":["!vote","!results","!help"],
         "moderator":["!emily","!ashton"],
         "subscriber":["!ashton"]
     },

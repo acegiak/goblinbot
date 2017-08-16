@@ -22,6 +22,13 @@ class goblinbot:
         if len(allowed)> 0 and not permitted:
             return "The "+part[0]+" command can only be used by the following user types: "+(",".join(allowed))
 
+
+        if part[0] == "!help":
+            available = ["!help","!roll","!vote","!results","!subname","!listnames","!randomname"]
+            if hasattr(self,'commands'):
+                for command in self.commands.keys:
+                    available.append(command)
+
         if part[0] == "!subname":
             if not hasattr(self,'namelists'):
                 return "No namelists are configured"
@@ -88,7 +95,7 @@ class goblinbot:
             if len(part) < 3:
                 return "Not enough arguments. Please enter !vote pollname option"
             if part[1].lower() not in self.polls:
-                return "There is no poll called "+part[1]
+                return "There is no poll called "+part[1]+" available polls:"+(", ".join(self.polls))
             #allow for either vote options that are from a specified list or freeform
             if self.polls[part[1].lower()] != "*" and part[2].lower() not in self.polls[part[1].lower()]:
                 return "The poll "+part[1]+" does not allow the option "+part[2]+". Options are:"+(", ".join(self.polls[part[1].lower()]))
